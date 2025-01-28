@@ -58,6 +58,7 @@ export interface QueryBuilderSettings {
   sort?: Sort[];
   filters?: (Filter | LogicalFilter)[];
   pagination?: Pagination;
+  populate?: string[] | string;
 }
 
 /**
@@ -84,7 +85,8 @@ const getNestedFilterString = (field: string): string => {
  *     { field: 'eventStart', operator: '$gte', value: Date.now() },
  *     { field: 'center.id', operator: '$eq', value: 123 }
  *   ],
- *   pagination: { limit: 10 }
+ *   pagination: { limit: 10 },
+ *   populate: ['department', 'projects']
  * });
  * ```
  */
@@ -160,6 +162,14 @@ export const queryBuilder = (settings: QueryBuilderSettings): string => {
     if (typeof offset === "number") {
       query.append("pagination[offset]", offset.toString());
     }
+  }
+
+  // Handle populate
+  if (settings.populate) {
+    const populateValue = Array.isArray(settings.populate)
+      ? settings.populate.join(",")
+      : settings.populate;
+    query.append("populate", populateValue);
   }
 
   return query.toString();

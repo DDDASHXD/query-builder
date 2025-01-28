@@ -1,17 +1,20 @@
 # @skxv/query-builder
 
-A flexible query builder for use with internal TC api, that generates URL query strings. This package helps you build complex query strings with support for sorting, filtering, pagination, and nested field paths.
+A flexible query builder for use with internal TC api, that generates URL query strings. This package helps you build complex query strings with support for sorting, filtering, pagination, populate, and nested field paths.
 
 ## Installation
 
 ```bash
-npm install @tc/query-builder
+npm install @skxv/query-builder
 ```
 
 ## Usage
 
 ```typescript
-import { queryBuilder, type QueryBuilderSettings } from "@tc/query-builder";
+import {
+  queryBuilder,
+  type QueryBuilderSettings
+} from "@skxv/query-builder/dist/src";
 
 // Example usage
 const settings: QueryBuilderSettings = {
@@ -51,14 +54,36 @@ const settings: QueryBuilderSettings = {
   pagination: {
     limit: 10,
     offset: 0
-  }
+  },
+
+  // Populate related fields
+  populate: ["department", "projects"]
 };
 
 const queryString = queryBuilder(settings);
-// Result: sort[0]=eventStart&sort[1]=title:desc&filters[eventStart][$gte]=1643673600&filters[center][id][$eq]=123&filters[$and][0][status]=active&filters[$and][1][category]=event&pagination[limit]=10&pagination[offset]=0
+// Result includes: populate=department,projects
 ```
 
 ## Features
+
+### Populate Support
+
+The query builder supports populating related fields. This is useful when you need to include related data in the response:
+
+```typescript
+// Example with populate
+const settings: QueryBuilderSettings = {
+  // You can use an array of strings
+  populate: ["department", "projects"],
+
+  // Or a comma-separated string
+  populate: "department,projects,manager"
+};
+
+// Results in: populate=department,projects or populate=department,projects,manager
+```
+
+By default, relation fields are not fully included in the response to prevent performance issues. Using populate allows you to specify which relation fields should be included in the response, avoiding the need for multiple requests.
 
 ### Nested Field Support
 
@@ -97,6 +122,7 @@ interface QueryBuilderSettings {
   sort?: Sort[];
   filters?: (Filter | LogicalFilter)[];
   pagination?: Pagination;
+  populate?: string[] | string; // Array of fields to populate or comma-separated string
 }
 ```
 
@@ -178,7 +204,7 @@ const settings: QueryBuilderSettings = {
 // Results in: filters[$and][0][center][id][$eq]=123&filters[$and][1][center][status][$eq]=active
 ```
 
-### Combining Multiple Features
+### Combining Multiple Features with Populate
 
 ```typescript
 const settings: QueryBuilderSettings = {
@@ -207,8 +233,9 @@ const settings: QueryBuilderSettings = {
   ],
   pagination: {
     limit: 20
-  }
+  },
+  populate: ["center", "status.category", "assignedUsers"]
 };
 
-// Results in a query string with sorting, nested filters, logical operators, and pagination
+// Results in a query string with sorting, nested filters, logical operators, pagination, and populated relations
 ```
