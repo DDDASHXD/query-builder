@@ -1,4 +1,4 @@
-# @DDDASHXD/query-builder
+# @skxv/query-builder
 
 A flexible query builder for use with internal TC api, that generates URL query strings. This package helps you build complex query strings with support for sorting, filtering, and pagination.
 
