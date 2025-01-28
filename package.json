@@ -1,12 +1,11 @@
 {
   "name": "@skxv/query-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A flexible query builder for use with internal TC api, that generates URL query strings",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "private": true,
   "publishConfig": {
-    "access": "restricted",
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
@@ -28,9 +27,6 @@
     "@types/node": "^20.17.16",
     "@types/react": "^18.3.18",
     "typescript": "^5.7.3"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
   },
   "files": [
     "dist",
