@@ -1,7 +1,8 @@
 {
   "name": "@skxv/query-builder",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A flexible query builder for use with internal TC api, that generates URL query strings",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "publishConfig": {
@@ -11,7 +12,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ts-node test.ts"
   },
   "keywords": [
     "react",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/node": "^20.17.16",
     "@types/react": "^18.3.18",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },
   "files": [

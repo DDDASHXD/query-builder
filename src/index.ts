@@ -61,6 +61,18 @@ export interface QueryBuilderSettings {
 }
 
 /**
+ * Converts a field path to a nested filter string
+ * @param field - The field path (e.g. "center.id")
+ * @returns The nested filter string (e.g. "[center][id]")
+ */
+const getNestedFilterString = (field: string): string => {
+  return field
+    .split(".")
+    .map((part) => `[${part}]`)
+    .join("");
+};
+
+/**
  * Builds a URL query string from the provided settings
  * @param settings - Configuration object for building the query
  * @returns URL encoded query string
@@ -69,7 +81,8 @@ export interface QueryBuilderSettings {
  * const query = queryBuilder({
  *   sort: [{ field: 'eventStart', order: 'asc' }],
  *   filters: [
- *     { field: 'eventStart', operator: '$gte', value: Date.now() }
+ *     { field: 'eventStart', operator: '$gte', value: Date.now() },
+ *     { field: 'center.id', operator: '$eq', value: 123 }
  *   ],
  *   pagination: { limit: 10 }
  * });
@@ -102,7 +115,9 @@ export const queryBuilder = (settings: QueryBuilderSettings): string => {
           const filterKey = `filters[${filter.operator}][${subIndex}]`;
           if (subFilter.relation) {
             query.append(
-              `${filterKey}[${subFilter.relation}][${subFilter.field}]`,
+              `${filterKey}[${subFilter.relation}]${getNestedFilterString(
+                subFilter.field
+              )}`,
               String(subFilter.value)
             );
           } else {
@@ -110,7 +125,9 @@ export const queryBuilder = (settings: QueryBuilderSettings): string => {
               ? `[${subFilter.operator}]`
               : "";
             query.append(
-              `${filterKey}[${subFilter.field}]${operatorStr}`,
+              `${filterKey}${getNestedFilterString(
+                subFilter.field
+              )}${operatorStr}`,
               Array.isArray(subFilter.value)
                 ? JSON.stringify(subFilter.value)
                 : String(subFilter.value)
@@ -122,13 +139,13 @@ export const queryBuilder = (settings: QueryBuilderSettings): string => {
         const f = filter as Filter;
         if (f.relation) {
           query.append(
-            `filters[${f.relation}][${f.field}]`,
+            `filters[${f.relation}]${getNestedFilterString(f.field)}`,
             Array.isArray(f.value) ? JSON.stringify(f.value) : String(f.value)
           );
         } else {
           const operatorStr = f.operator ? `[${f.operator}]` : "";
           query.append(
-            `filters[${f.field}]${operatorStr}`,
+            `filters${getNestedFilterString(f.field)}${operatorStr}`,
             Array.isArray(f.value) ? JSON.stringify(f.value) : String(f.value)
           );
         }
