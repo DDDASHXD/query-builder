@@ -18,7 +18,8 @@ type ComparisonOperator =
   | "$in"
   | "$lt"
   | "$lte"
-  | "$null";
+  | "$null"
+  | "$like";
 
 /**
  * Available logical operators for combining filters
