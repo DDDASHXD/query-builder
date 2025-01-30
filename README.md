@@ -11,13 +11,10 @@ npm install @skxv/query-builder
 ## Usage
 
 ```typescript
-import {
-  queryBuilder,
-  type QueryBuilderSettings
-} from "@skxv/query-builder/dist/src";
+import { queryBuilder } from "@skxv/query-builder/dist/src";
 
 // Example usage
-const settings: QueryBuilderSettings = {
+const query = queryBuilder({
   // Sorting
   sort: [
     { field: "eventStart", order: "asc" },
@@ -58,7 +55,7 @@ const settings: QueryBuilderSettings = {
 
   // Populate related fields
   populate: ["department", "projects"]
-};
+});
 
 const queryString = queryBuilder(settings);
 // Result includes: populate=department,projects
@@ -72,13 +69,13 @@ The query builder supports populating related fields. This is useful when you ne
 
 ```typescript
 // Example with populate
-const settings: QueryBuilderSettings = {
+const settings = queryBuilder({
   // You can use an array of strings
   populate: ["department", "projects"],
 
   // Or a comma-separated string
   populate: "department,projects,manager"
-};
+});
 
 // Results in: populate=department,projects or populate=department,projects,manager
 ```
@@ -91,7 +88,7 @@ The query builder supports nested field paths using dot notation. This is partic
 
 ```typescript
 // Example with nested fields
-const settings: QueryBuilderSettings = {
+const settings = queryBuilder({
   filters: [
     // Filter on nested property
     {
@@ -106,7 +103,7 @@ const settings: QueryBuilderSettings = {
       value: "example@email.com"
     }
   ]
-};
+});
 
 // Results in: filters[center][id][$eq]=123&filters[user][profile][email][$eq]=example@email.com
 ```
@@ -157,6 +154,7 @@ Available comparison operators:
 - `$lte`: Less than or equal
 - `$in`: In array
 - `$null`: Is null
+- `$like`: Wildcard search
 
 ### LogicalFilter
 
@@ -181,7 +179,7 @@ interface Pagination {
 ### Complex Nested Filters with Logical Operators
 
 ```typescript
-const settings: QueryBuilderSettings = {
+const query = queryBuilder({
   filters: [
     {
       operator: "$and",
@@ -199,7 +197,7 @@ const settings: QueryBuilderSettings = {
       ]
     }
   ]
-};
+});
 
 // Results in: filters[$and][0][center][id][$eq]=123&filters[$and][1][center][status][$eq]=active
 ```
@@ -207,7 +205,7 @@ const settings: QueryBuilderSettings = {
 ### Combining Multiple Features with Populate
 
 ```typescript
-const settings: QueryBuilderSettings = {
+const settings = queryBuilder({
   sort: [{ field: "center.name", order: "asc" }],
   filters: [
     {
@@ -235,7 +233,7 @@ const settings: QueryBuilderSettings = {
     limit: 20
   },
   populate: ["center", "status.category", "assignedUsers"]
-};
+});
 
 // Results in a query string with sorting, nested filters, logical operators, pagination, and populated relations
 ```
