@@ -60,6 +60,23 @@ export interface QueryBuilderSettings {
   filters?: (Filter | LogicalFilter)[];
   pagination?: Pagination;
   populate?: string[] | string;
+  /**
+   * Enable SQL query debugging
+   * @default false
+   */
+  showSql?: boolean;
+  /**
+   * Log SQL queries to TYPO3 system log
+   * @default false
+   */
+  logSql?: boolean;
+  /**
+   * Select specific fields to return in the response
+   * @example ['firstName', 'lastName'] // Basic fields
+   * @example ['centers.name', 'centers.address'] // Nested fields using dot notation
+   * @example ['integration.type.name'] // Deeply nested fields
+   */
+  select?: string[];
 }
 
 /**
@@ -94,13 +111,25 @@ const getNestedFilterString = (field: string): string => {
 export const queryBuilder = (settings: QueryBuilderSettings): string => {
   const query = new URLSearchParams();
 
+  // Handle SQL debugging
+  if (settings.showSql) {
+    query.append("showsql", "1");
+  }
+  if (settings.logSql) {
+    query.append("logsql", "1");
+  }
+
+  // Handle field selection
+  if (settings.select?.length) {
+    query.append("select", settings.select.join(","));
+  }
+
   // Handle sorting
   if (settings.sort?.length) {
     settings.sort.forEach((sort, index) => {
-      query.append(`sort[${index}]`, sort.field);
-      if (sort.order === "desc") {
-        query.append(`sort[${index}]`, `:${sort.order}`);
-      }
+      const sortValue =
+        sort.order === "desc" ? `${sort.field}:${sort.order}` : sort.field;
+      query.append(`sort[${index}]`, sortValue);
     });
   }
 

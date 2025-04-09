@@ -1,6 +1,6 @@
 {
   "name": "@skxv/query-builder",
-  "version": "1.1.4",
+  "version": "1.1.7",
   "description": "A flexible query builder for use with internal TC api, that generates URL query strings",
   "type": "module",
   "main": "dist/index.js",

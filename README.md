@@ -1,6 +1,6 @@
 # @skxv/query-builder
 
-A flexible query builder for use with internal TC api, that generates URL query strings. This package helps you build complex query strings with support for sorting, filtering, pagination, populate, and nested field paths.
+A flexible query builder for use with internal TC api, that generates URL query strings. This package helps you build complex query strings with support for sorting, filtering, pagination, populate, select, and SQL debugging.
 
 ## Installation
 
@@ -8,41 +8,34 @@ A flexible query builder for use with internal TC api, that generates URL query 
 npm install @skxv/query-builder
 ```
 
-## Usage
+## Quick Start
 
 ```typescript
 import { queryBuilder } from "@skxv/query-builder/dist/src";
 
-// Example usage
+// Basic usage
 const query = queryBuilder({
   // Sorting
   sort: [
-    { field: "eventStart", order: "asc" },
-    { field: "title", order: "desc" }
+    { field: "createdAt", order: "asc" },
+    { field: "name", order: "desc" }
   ],
 
   // Filtering
   filters: [
     // Simple filter
     {
-      field: "eventStart",
-      operator: "$gte",
-      value: new Date().setHours(0, 0, 0, 0) / 1000
-    },
-
-    // Nested field filter
-    {
-      field: "center.id",
+      field: "status",
       operator: "$eq",
-      value: 123
+      value: "active"
     },
 
     // Logical operator filter
     {
       operator: "$and",
       filters: [
-        { field: "status", value: "active" },
-        { field: "category", value: "event" }
+        { field: "type", value: "user" },
+        { field: "isVerified", value: true }
       ]
     }
   ],
@@ -54,72 +47,129 @@ const query = queryBuilder({
   },
 
   // Populate related fields
-  populate: ["department", "projects"]
-});
+  populate: ["profile", "settings"],
 
-const queryString = queryBuilder(settings);
-// Result includes: populate=department,projects
+  // Select specific fields
+  select: ["id", "name", "email", "status"],
+
+  // SQL Debugging
+  showSql: true,
+  logSql: true
+});
 ```
 
 ## Features
 
-### Populate Support
+### Sorting
 
-The query builder supports populating related fields. This is useful when you need to include related data in the response:
+Sort results by one or more fields:
 
 ```typescript
-// Example with populate
-const settings = queryBuilder({
-  // You can use an array of strings
-  populate: ["department", "projects"],
-
-  // Or a comma-separated string
-  populate: "department,projects,manager"
+const query = queryBuilder({
+  sort: [
+    { field: "createdAt", order: "asc" },
+    { field: "name", order: "desc" }
+  ]
 });
-
-// Results in: populate=department,projects or populate=department,projects,manager
+// Results in: sort[0]=createdAt&sort[1]=name:desc
 ```
 
-By default, relation fields are not fully included in the response to prevent performance issues. Using populate allows you to specify which relation fields should be included in the response, avoiding the need for multiple requests.
+### Filtering
 
-### Nested Field Support
-
-The query builder supports nested field paths using dot notation. This is particularly useful when filtering on nested object properties:
+Apply complex filters using comparison and logical operators:
 
 ```typescript
-// Example with nested fields
-const settings = queryBuilder({
+const query = queryBuilder({
   filters: [
-    // Filter on nested property
+    // Simple comparison
     {
-      field: "center.id",
+      field: "status",
       operator: "$eq",
-      value: 123
+      value: "active"
     },
-    // Multiple levels of nesting
+    // Logical combination
     {
-      field: "user.profile.email",
-      operator: "$eq",
-      value: "example@email.com"
+      operator: "$and",
+      filters: [
+        { field: "type", value: "user" },
+        { field: "isVerified", value: true }
+      ]
     }
   ]
 });
-
-// Results in: filters[center][id][$eq]=123&filters[user][profile][email][$eq]=example@email.com
 ```
+
+### Pagination
+
+Control the number of results and pagination:
+
+```typescript
+const query = queryBuilder({
+  pagination: {
+    limit: 10,
+    offset: 20
+  }
+});
+// Results in: pagination[limit]=10&pagination[offset]=20
+```
+
+### Populate
+
+Include related data in the response:
+
+```typescript
+const query = queryBuilder({
+  // Array of strings
+  populate: ["profile", "settings"],
+
+  // Or comma-separated string
+  populate: "profile,settings,preferences"
+});
+// Results in: populate=profile,settings
+```
+
+### Select
+
+Choose specific fields to return in the response:
+
+```typescript
+const query = queryBuilder({
+  select: ["id", "name", "email", "status", "createdAt"]
+});
+// Results in: select=id,name,email,status,createdAt
+```
+
+Note: The `id` field cannot be de-selected and will always be included in the response.
+
+### SQL Debugging
+
+Enable SQL query debugging for development:
+
+```typescript
+const query = queryBuilder({
+  showSql: true, // Show SQL in output
+  logSql: true // Log SQL to TYPO3 system log
+});
+// Results in: showsql=1&logsql=1
+```
+
+Note: SQL debugging only works when the request originates from a local (private) IP address.
 
 ## API Reference
 
 ### QueryBuilderSettings
 
-Main configuration interface for the query builder:
+Main configuration interface:
 
 ```typescript
 interface QueryBuilderSettings {
   sort?: Sort[];
   filters?: (Filter | LogicalFilter)[];
   pagination?: Pagination;
-  populate?: string[] | string; // Array of fields to populate or comma-separated string
+  populate?: string[] | string;
+  select?: string[];
+  showSql?: boolean;
+  logSql?: boolean;
 }
 ```
 
@@ -127,7 +177,7 @@ interface QueryBuilderSettings {
 
 ```typescript
 interface Sort {
-  field: string; // Can use dot notation for nested fields
+  field: string;
   order: "asc" | "desc";
 }
 ```
@@ -136,7 +186,7 @@ interface Sort {
 
 ```typescript
 interface Filter {
-  field: string; // Supports dot notation for nested fields (e.g., "center.id")
+  field: string;
   operator?: ComparisonOperator;
   value: string | number | boolean | null | Array<string | number>;
   relation?: string;
@@ -145,7 +195,7 @@ interface Filter {
 
 ### ComparisonOperator
 
-Available comparison operators:
+Available operators:
 
 - `$eq`: Equal
 - `$gt`: Greater than
@@ -161,7 +211,7 @@ Available comparison operators:
 ```typescript
 interface LogicalFilter {
   operator: LogicalOperator; // "$and" | "$or" | "$not"
-  filters: Filter[]; // Each filter can use nested fields
+  filters: Filter[];
 }
 ```
 
@@ -176,64 +226,42 @@ interface Pagination {
 
 ## Advanced Examples
 
-### Complex Nested Filters with Logical Operators
+### Complex Query with All Features
 
 ```typescript
 const query = queryBuilder({
+  sort: [{ field: "createdAt", order: "desc" }],
   filters: [
+    {
+      field: "status",
+      value: "active"
+    },
     {
       operator: "$and",
       filters: [
         {
-          field: "center.id",
+          field: "type",
           operator: "$eq",
-          value: 123
+          value: "user"
         },
         {
-          field: "center.status",
+          field: "isVerified",
           operator: "$eq",
-          value: "active"
-        }
-      ]
-    }
-  ]
-});
-
-// Results in: filters[$and][0][center][id][$eq]=123&filters[$and][1][center][status][$eq]=active
-```
-
-### Combining Multiple Features with Populate
-
-```typescript
-const settings = queryBuilder({
-  sort: [{ field: "center.name", order: "asc" }],
-  filters: [
-    {
-      field: "center.id",
-      operator: "$eq",
-      value: 123
-    },
-    {
-      operator: "$or",
-      filters: [
-        {
-          field: "status",
-          operator: "$eq",
-          value: "active"
-        },
-        {
-          field: "status",
-          operator: "$eq",
-          value: "pending"
+          value: true
         }
       ]
     }
   ],
   pagination: {
-    limit: 20
+    limit: 100
   },
-  populate: ["center", "status.category", "assignedUsers"]
+  populate: ["profile", "settings", "preferences"],
+  select: ["id", "name", "email", "status", "createdAt"],
+  showSql: true
 });
-
-// Results in a query string with sorting, nested filters, logical operators, pagination, and populated relations
 ```
+
+# Changelog
+
+- _1.1.7 - 9. April 2024_
+  > Added support for select, and sql debugging
